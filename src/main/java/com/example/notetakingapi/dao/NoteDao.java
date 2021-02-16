@@ -1,6 +1,6 @@
 package com.example.notetakingapi.dao;
 
-import com.example.notetakingapi.MyException;
+import com.example.notetakingapi.exception.MyException;
 import com.example.notetakingapi.model.Note;
 
 import java.util.List;
@@ -13,5 +13,7 @@ public interface NoteDao {
 
     int updateNote(Note note, int id) throws MyException;
 
-    List<Note> getNotes() throws MyException;
+    List<Note> getAllNotes() throws MyException;
+
+    Note getNoteById(int id) throws MyException;
 }

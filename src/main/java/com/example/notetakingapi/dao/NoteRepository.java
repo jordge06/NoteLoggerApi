@@ -1,6 +1,6 @@
 package com.example.notetakingapi.dao;
 
-import com.example.notetakingapi.MyException;
+import com.example.notetakingapi.exception.MyException;
 import com.example.notetakingapi.model.Note;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,7 +22,8 @@ public class NoteRepository implements NoteDao {
 
     private static final String INSERT_QUERY = "INSERT INTO note_table(note_id, title, " +
             "note_created, note_text) VALUES (NEXTVAL('note_table_seq'), ?, ?, ?)";
-    private static final String SELECT_QUERY = "SELECT * FROM note_table";
+    private static final String SELECT_ALL_QUERY = "SELECT * FROM note_table";
+    private static final String SELECT_QUERY = "SELECT * FROM note_table WHERE note_id = ?";
     private static final String DELETE_QUERY = "DELETE FROM note_table WHERE note_id = ?";
     private static final String UPDATE_QUERY = "UPDATE note_table " +
             "SET title = ?, note_created = ?, note_text = ? " +
@@ -59,7 +60,7 @@ public class NoteRepository implements NoteDao {
             return status;
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            throw new MyException("Note Delete Failed");
+            throw new MyException("Note not found for id :" + id);
         }
     }
 
@@ -69,14 +70,14 @@ public class NoteRepository implements NoteDao {
             return jdbcTemplate.update(UPDATE_QUERY, note.getNoteTitle(), note.getCreatedAt(), note.getNoteText(), id);
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            throw new MyException("Note Update Failed");
+            throw new MyException("Note not found for this id :" + id);
         }
     }
 
     @Override
-    public List<Note> getNotes() throws MyException {
+    public List<Note> getAllNotes() throws MyException {
         try {
-            return jdbcTemplate.query(SELECT_QUERY, (resultSet, i) -> {
+            return jdbcTemplate.query(SELECT_ALL_QUERY, (resultSet, i) -> {
                 final int id = Integer.parseInt(resultSet.getString("note_id"));
                 final String title = resultSet.getString("title");
                 final String text = resultSet.getString("note_text");
@@ -86,6 +87,21 @@ public class NoteRepository implements NoteDao {
         } catch (Exception e) {
             System.out.println(e.getMessage());
             throw new MyException("Can't Fetch List");
+        }
+    }
+
+    @Override
+    public Note getNoteById(int id) throws MyException {
+        try {
+            return jdbcTemplate.queryForObject(SELECT_QUERY, (resultSet, i) -> {
+                final int noteId = Integer.parseInt(resultSet.getString("note_id"));
+                final String title = resultSet.getString("title");
+                final String text = resultSet.getString("note_text");
+                final long createdAt = Long.parseLong(resultSet.getString("note_created"));
+                return new Note(noteId, title, createdAt, text);
+            }, id);
+        } catch (Exception e) {
+            throw new MyException("Note not found for this id :" + id);
         }
     }
 
